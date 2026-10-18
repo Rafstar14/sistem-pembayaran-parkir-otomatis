@@ -38,9 +38,9 @@ Sesuai dengan spesifikasi studi kasus, program ini menggunakan 5 fungsi utama:
 
 ---
 
-## 🚀 Cara Orang Lain Menggunakan Kode Ini
+## 🚀 Cara Menggunakan Kode Ini
 
-Bagi pengguna atau dosen yang ingin menguji program ini, terdapat dua cara mudah:
+Bagi yang ingin menguji program ini, terdapat dua cara:
 
 ### Cara A: Langsung Salin Kode (Tanpa Git)
 1. Buat file baru di komputer menggunakan aplikasi C++ IDE (seperti Dev-C++, Code::Blocks, atau VS Code) dan beri nama `main.cpp`.
