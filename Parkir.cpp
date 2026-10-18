@@ -2,10 +2,8 @@
 #include <string>
 #include <iomanip>
 #include <locale>
-
 using namespace std;
 
-// Pengaturan bawaan C++ untuk otomatis memberi titik ribuan (Bukan Function)
 struct TitikRibuan : numpunct<char>
 {
     char do_thousands_sep() const { return '.'; }
@@ -222,6 +220,5 @@ int main()
     tampilkanStruk(namaKendaraan, durasi, namaMember, tarifDasar, diskon,
                    biayaTambahan, potonganTambahan, totalBayar,
                    metodeBayar, nominalBayar, kembalian);
-
     return 0;
 }
