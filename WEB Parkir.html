@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPark POS — Sistem Pembayaran Parkir Otomatis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+        .font-mono-receipt {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Efek gerigi kertas struk di bagian bawah */
+        .receipt-jagged {
+            background: linear-gradient(-45deg, transparent 8px, #ffffff 0), 
+                        linear-gradient(45deg, transparent 8px, #ffffff 0);
+            background-repeat: repeat-x;
+            background-position: left bottom;
+            background-size: 16px 16px;
+            padding-bottom: 24px;
+        }
+        /* Animasi halus saat kartu dipilih */
+        .option-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-card.active {
+            border-color: #0f172a;
+            background-color: #0f172a;
+            color: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.15);
+        }
+        .option-card.active .sub-text {
+            color: #cbd5e1;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .print-area { box-shadow: none !important; border: 1px solid #e2e8f0; width: 100%; max-width: 400px; margin: 0 auto; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 py-8 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 mb-8 border-b border-slate-200 no-print">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                    P
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-slate-900">SmartPark POS</h1>
+                    <p class="text-xs text-slate-500">Sistem Pembayaran Parkir Otomatis</p>
+                </div>
+            </div>
+            <div class="mt-4 sm:mt-0 flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Sistem Aktif
+                </span>
+            </div>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Kolom Kiri: Form Input Kasir -->
+            <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8 space-y-7 no-print">
+                
+                <!-- 1. Pilih Jenis Kendaraan -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+                        1. Pilih Jenis Kendaraan
+                    </label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button type="button" onclick="pilihKendaraan(1)" id="btn-kendaraan-1"
+                            class="option-card active text-left p-4 rounded-xl border border-slate-200 hover:border-slate-400">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-2xl">🛵</span>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-white/10 sub-text">Kode: 1</span>
+                            </div>
+                            <div class="font-bold text-base">Motor</div>
+                            <div class="text-xs text-slate-500 sub-text mt-0.5">Rp 3.000 (Jam 1) • +Rp 2.000/jam</div>
+                        </button>
+
+                        <button type="button" onclick="pilihKendaraan(2)" id="btn-kendaraan-2"
+                            class="option-card text-left p-4 rounded-xl border border-slate-200 hover:border-slate-400">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-2xl">🚗</span>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-500 sub-text">Kode: 2</span>
+                            </div>
+                            <div class="font-bold text-base">Mobil</div>
+                            <div class="text-xs text-slate-500 sub-text mt-0.5">Rp 5.000 (Jam 1) • +Rp 3.000/jam</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Durasi Parkir -->
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                            2. Durasi Parkir (Jam)
+                        </label>
+                        <span id="badge-tambahan" class="hidden text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                            &gt; 8 Jam (+Rp 5.000)
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="ubahDurasi(-1)" 
+                            class="w-12 h-12 rounded-xl border border-slate-200 flex items-center justify-center text-xl font-bold hover:bg-slate-50 active:scale-95 transition">
+                            −
+                        </button>
+                        <div class="relative flex-1">
+                            <input type="number" id="input-durasi" value="1" min="1" max="720" oninput="sinkronisasiUI()"
+                                class="w-full h-12 text-center font-bold text-lg rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">Jam</span>
+                        </div>
+                        <button type="button" onclick="ubahDurasi(1)" 
+                            class="w-12 h-12 rounded-xl border border-slate-200 flex items-center justify-center text-xl font-bold hover:bg-slate-50 active:scale-95 transition">
+                            +
+                        </button>
+                    </div>
+                    <!-- Tombol Pintas Durasi -->
+                    <div class="flex gap-2 mt-2.5">
+                        <button type="button" onclick="setDurasi(1)" class="text-xs px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition">1 Jam</button>
+                        <button type="button" onclick="setDurasi(3)" class="text-xs px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition">3 Jam</button>
+                        <button type="button" onclick="setDurasi(9)" class="text-xs px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition">9 Jam (&gt;8j)</button>
+                        <button type="button" onclick="setDurasi(12)" class="text-xs px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition">12 Jam (Potongan)</button>
+                    </div>
+                </div>
+
+                <!-- 3. Status Keanggotaan -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+                        3. Status Keanggotaan
+                    </label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" onclick="pilihMember(1)" id="btn-member-1"
+                            class="option-card text-left p-3.5 rounded-xl border border-slate-200 hover:border-slate-400">
+                            <div class="font-bold text-sm">Gold</div>
+                            <div class="text-xs text-slate-500 sub-text mt-0.5">Diskon 20%</div>
+                        </button>
+                        <button type="button" onclick="pilihMember(2)" id="btn-member-2"
+                            class="option-card text-left p-3.5 rounded-xl border border-slate-200 hover:border-slate-400">
+                            <div class="font-bold text-sm">Silver</div>
+                            <div class="text-xs text-slate-500 sub-text mt-0.5">Diskon 10%</div>
+                        </button>
+                        <button type="button" onclick="pilihMember(3)" id="btn-member-3"
+                            class="option-card active text-left p-3.5 rounded-xl border border-slate-200 hover:border-slate-400">
+                            <div class="font-bold text-sm">Non-Member</div>
+                            <div class="text-xs text-slate-500 sub-text mt-0.5">Tanpa Diskon</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4. Metode Pembayaran -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+                        4. Metode Pembayaran
+                    </label>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <button type="button" onclick="pilihMetode(1)" id="btn-metode-1"
+                            class="option-card active p-3.5 rounded-xl border border-slate-200 hover:border-slate-400 flex items-center justify-center gap-2 font-semibold text-sm">
+                            <span>💵</span> Tunai (Cash)
+                        </button>
+                        <button type="button" onclick="pilihMetode(2)" id="btn-metode-2"
+                            class="option-card p-3.5 rounded-xl border border-slate-200 hover:border-slate-400 flex items-center justify-center gap-2 font-semibold text-sm">
+                            <span>📱</span> QRIS
+                        </button>
+                    </div>
+
+                    <!-- Input Uang Tunai (Hanya muncul jika pilih Tunai) -->
+                    <div id="panel-tunai" class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="text-xs font-semibold text-slate-600">Masukkan Uang Tunai Diterima</label>
+                            <button type="button" onclick="setUangPas()" class="text-xs font-semibold text-slate-900 underline hover:text-slate-600">
+                                Uang Pas
+                            </button>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-400 text-sm">Rp</span>
+                            <input type="number" id="input-tunai" placeholder="0" oninput="sinkronisasiUI()"
+                                class="w-full pl-11 pr-4 py-2.5 bg-white rounded-xl border border-slate-200 font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900">
+                        </div>
+                        <!-- Pecahan Uang Cepat -->
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="setNominalTunai(10000)" class="text-xs px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-medium">Rp 10.000</button>
+                            <button type="button" onclick="setNominalTunai(20000)" class="text-xs px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-medium">Rp 20.000</button>
+                            <button type="button" onclick="setNominalTunai(50000)" class="text-xs px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-medium">Rp 50.000</button>
+                            <button type="button" onclick="setNominalTunai(100000)" class="text-xs px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-medium">Rp 100.000</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifikasi Error / Sukses -->
+                <div id="alert-box" class="hidden p-4 rounded-xl text-sm font-medium"></div>
+
+                <!-- Tombol Aksi -->
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="prosesTransaksi()"
+                        class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 px-6 rounded-xl shadow-sm transition active:scale-[0.99]">
+                        Proses &amp; Validasi Pembayaran
+                    </button>
+                    <button type="button" onclick="resetForm()"
+                        class="px-4 py-3.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-medium text-sm transition">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kolom Kanan: Live Struk Parkir -->
+            <div class="lg:col-span-5">
+                <div class="bg-white rounded-t-2xl shadow-md border border-b-0 border-slate-200/80 p-6 sm:p-8 receipt-jagged print-area">
+                    <!-- Header Struk -->
+                    <div class="text-center border-b border-dashed border-slate-300 pb-5 mb-5">
+                        <div class="inline-block px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-mono-receipt text-xs font-semibold mb-2">
+                            STRUK PARKIR OTOMATIS
+                        </div>
+                        <p class="text-xs text-slate-400 font-mono-receipt" id="struk-waktu">Minggu, 18 Okt 2026</p>
+                    </div>
+
+                    <!-- Rincian Data Kendaraan -->
+                    <div class="space-y-2.5 text-xs font-mono-receipt border-b border-dashed border-slate-300 pb-5 mb-5">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Jenis Kendaraan</span>
+                            <span class="font-semibold text-slate-900" id="struk-kendaraan">Motor</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Durasi Parkir</span>
+                            <span class="font-semibold text-slate-900" id="struk-durasi">1 jam</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Status Keanggotaan</span>
+                            <span class="font-semibold text-slate-900" id="struk-member">Non-Member</span>
+                        </div>
+                    </div>
+
+                    <!-- Rincian Perhitungan Biaya -->
+                    <div class="space-y-2.5 text-xs font-mono-receipt border-b border-dashed border-slate-300 pb-5 mb-5">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Tarif Dasar</span>
+                            <span class="font-medium text-slate-800" id="struk-tarif-dasar">Rp 3.000</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Diskon Member</span>
+                            <span class="font-medium text-emerald-600" id="struk-diskon">-Rp 0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Biaya Tambahan (&gt;8j)</span>
+                            <span class="font-medium text-slate-800" id="struk-tambahan">Rp 0</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Potongan Tambahan</span>
+                            <span class="font-medium text-emerald-600" id="struk-potongan">-Rp 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Total Bayar -->
+                    <div class="border-b border-dashed border-slate-300 pb-5 mb-5">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono-receipt">TOTAL BAYAR</span>
+                            <span class="text-2xl font-bold text-slate-900 font-mono-receipt" id="struk-total">Rp 3.000</span>
+                        </div>
+                    </div>
+
+                    <!-- Rincian Pembayaran -->
+                    <div class="space-y-2.5 text-xs font-mono-receipt mb-6">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Metode Pembayaran</span>
+                            <span class="font-semibold text-slate-900" id="struk-metode">Tunai</span>
+                        </div>
+                        <div id="baris-tunai-diterima" class="flex justify-between">
+                            <span class="text-slate-500">Uang Diterima</span>
+                            <span class="font-medium text-slate-800" id="struk-diterima">Rp 0</span>
+                        </div>
+                        <div id="baris-tunai-kembalian" class="flex justify-between">
+                            <span class="text-slate-500">Uang Kembalian</span>
+                            <span class="font-bold text-slate-900" id="struk-kembalian">Rp 0</span>
+                        </div>
+                        <div id="baris-status-qris" class="hidden flex justify-between">
+                            <span class="text-slate-500">Status QRIS</span>
+                            <span class="font-bold text-emerald-600" id="struk-qris">Lunas (Rp 3.000)</span>
+                        </div>
+                    </div>
+
+                    <!-- Badge Status Transaksi pada Struk -->
+                    <div id="struk-status-badge" class="text-center py-2.5 px-4 rounded-xl bg-slate-100 text-slate-600 font-mono-receipt text-xs font-semibold mb-4">
+                        MENUNGGU PEMBAYARAN
+                    </div>
+
+                    <p class="text-center text-[11px] text-slate-400 font-mono-receipt">
+                        Terima Kasih Atas Kunjungan Anda!
+                    </p>
+                </div>
+
+                <!-- Tombol Cetak Struk -->
+                <button type="button" onclick="window.print()" class="no-print mt-4 w-full py-3 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition">
+                    🖨️ Cetak Struk (Print / Simpan PDF)
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // State Aplikasi
+        let state = {
+            jenisKendaraan: 1, // 1: Motor, 2: Mobil
+            durasi: 1,
+            statusMember: 3,   // 1: Gold, 2: Silver, 3: Non-Member
+            pilihMetode: 1     // 1: Tunai, 2: QRIS
+        };
+
+        // Fungsi pembantu pemformat titik ribuan: 5000 -> "Rp 5.000"
+        function formatRupiah(angka) {
+            return "Rp " + Math.max(0, angka).toLocaleString('id-ID');
+        }
+
+        // =========================================================================
+        // 5 FUNGSI WAJIB SESUAI KETENTUAN STUDI KASUS
+        // =========================================================================
+
+        // 1. Fungsi menghitung tarif dasar berdasarkan jenis kendaraan dan durasi
+        function hitungTarifParkir(jenisKendaraan, durasi) {
+            if (durasi <= 0) return 0;
+
+            let tarifJamPertama = 0;
+            let tarifJamBerikutnya = 0;
+
+            if (jenisKendaraan === 1) { // Motor
+                tarifJamPertama = 3000;
+                tarifJamBerikutnya = 2000;
+            } else if (jenisKendaraan === 2) { // Mobil
+                tarifJamPertama = 5000;
+                tarifJamBerikutnya = 3000;
+            }
+
+            if (durasi === 1) {
+                return tarifJamPertama;
+            } else {
+                return tarifJamPertama + ((durasi - 1) * tarifJamBerikutnya);
+            }
+        }
+
+        // 2. Fungsi menghitung diskon berdasarkan status keanggotaan
+        function hitungDiskon(tarifDasar, statusMember) {
+            if (statusMember === 1) { // Member Gold (20%)
+                return Math.floor(tarifDasar * 20 / 100);
+            } else if (statusMember === 2) { // Member Silver (10%)
+                return Math.floor(tarifDasar * 10 / 100);
+            }
+            return 0; // Non-Member (0%)
+        }
+
+        // 3. Fungsi menghitung biaya tambahan jika parkir lebih dari 8 jam
+        function hitungBiayaTambahan(durasi) {
+            if (durasi > 8) {
+                return 5000;
+            }
+            return 0;
+        }
+
+        // 4. Fungsi menghitung total biaya akhir
+        function hitungTotalBayar(tarifDasar, diskon, biayaTambahan, refPotongan) {
+            let biayaSetelahDiskon = tarifDasar - diskon;
+            refPotongan.nilai = 0;
+
+            // Jika total biaya setelah diskon minimal Rp 30.000, dapat potongan Rp 2.000
+            if (biayaSetelahDiskon >= 30000) {
+                refPotongan.nilai = 2000;
+            }
+
+            let totalAkhir = biayaSetelahDiskon + biayaTambahan - refPotongan.nilai;
+
+            // Biaya akhir tidak boleh negatif
+            if (totalAkhir < 0) {
+                totalAkhir = 0;
+            }
+
+            return totalAkhir;
+        }
+
+        // 5. Fungsi menampilkan rincian struk transaksi ke UI
+        function tampilkanStruk(namaKendaraan, durasi, namaMember,
+                                tarifDasar, diskon, biayaTambahan,
+                                potonganTambahan, totalBayar,
+                                metodeBayar, nominalBayar, kembalian) {
+            document.getElementById('struk-kendaraan').textContent = namaKendaraan;
+            document.getElementById('struk-durasi').textContent = durasi + " jam";
+            document.getElementById('struk-member').textContent = namaMember;
+
+            document.getElementById('struk-tarif-dasar').textContent = formatRupiah(tarifDasar);
+            document.getElementById('struk-diskon').textContent = "-" + formatRupiah(diskon);
+            document.getElementById('struk-tambahan').textContent = formatRupiah(biayaTambahan);
+            document.getElementById('struk-potongan').textContent = "-" + formatRupiah(potonganTambahan);
+
+            document.getElementById('struk-total').textContent = formatRupiah(totalBayar);
+            document.getElementById('struk-metode').textContent = metodeBayar;
+
+            const barisDiterima = document.getElementById('baris-tunai-diterima');
+            const barisKembalian = document.getElementById('baris-tunai-kembalian');
+            const barisQRIS = document.getElementById('baris-status-qris');
+
+            if (metodeBayar === "Tunai") {
+                barisDiterima.classList.remove('hidden');
+                barisKembalian.classList.remove('hidden');
+                barisQRIS.classList.add('hidden');
+
+                document.getElementById('struk-diterima').textContent = formatRupiah(nominalBayar);
+                document.getElementById('struk-kembalian').textContent = formatRupiah(kembalian);
+            } else {
+                barisDiterima.classList.add('hidden');
+                barisKembalian.classList.add('hidden');
+                barisQRIS.classList.remove('hidden');
+
+                document.getElementById('struk-qris').textContent = "Lunas (" + formatRupiah(totalBayar) + ")";
+            }
+        }
+
+        // =========================================================================
+        // FUNGSI INTERAKSI UI & KONTROLER
+        // =========================================================================
+
+        function pilihKendaraan(pilihan) {
+            state.jenisKendaraan = pilihan;
+            document.getElementById('btn-kendaraan-1').classList.toggle('active', pilihan === 1);
+            document.getElementById('btn-kendaraan-2').classList.toggle('active', pilihan === 2);
+            sinkronisasiUI();
+        }
+
+        function pilihMember(pilihan) {
+            state.statusMember = pilihan;
+            [1, 2, 3].forEach(id => {
+                document.getElementById('btn-member-' + id).classList.toggle('active', id === pilihan);
+            });
+            sinkronisasiUI();
+        }
+
+        function pilihMetode(pilihan) {
+            state.pilihMetode = pilihan;
+            document.getElementById('btn-metode-1').classList.toggle('active', pilihan === 1);
+            document.getElementById('btn-metode-2').classList.toggle('active', pilihan === 2);
+            document.getElementById('panel-tunai').classList.toggle('hidden', pilihan === 2);
+            sinkronisasiUI();
+        }
+
+        function ubahDurasi(delta) {
+            const input = document.getElementById('input-durasi');
+            let val = parseInt(input.value) || 1;
+            val = Math.max(1, val + delta);
+            input.value = val;
+            sinkronisasiUI();
+        }
+
+        function setDurasi(jam) {
+            document.getElementById('input-durasi').value = jam;
+            sinkronisasiUI();
+        }
+
+        function setNominalTunai(nominal) {
+            document.getElementById('input-tunai').value = nominal;
+            sinkronisasiUI();
+        }
+
+        function setUangPas() {
+            const hasil = hitungSemua();
+            document.getElementById('input-tunai').value = hasil.totalBayar;
+            sinkronisasiUI();
+        }
+
+        function hitungSemua() {
+            let durasiInput = parseInt(document.getElementById('input-durasi').value);
+            state.durasi = (isNaN(durasiInput) || durasiInput <= 0) ? 1 : durasiInput;
+
+            let refPotongan = { nilai: 0 };
+            let tarifDasar = hitungTarifParkir(state.jenisKendaraan, state.durasi);
+            let diskon = hitungDiskon(tarifDasar, state.statusMember);
+            let biayaTambahan = hitungBiayaTambahan(state.durasi);
+            let totalBayar = hitungTotalBayar(tarifDasar, diskon, biayaTambahan, refPotongan);
+
+            return {
+                tarifDasar,
+                diskon,
+                biayaTambahan,
+                potonganTambahan: refPotongan.nilai,
+                totalBayar
+            };
+        }
+
+        function sinkronisasiUI() {
+            const hasil = hitungSemua();
+
+            // Tampilkan badge info jika > 8 jam
+            document.getElementById('badge-tambahan').classList.toggle('hidden', state.durasi <= 8);
+
+            let namaKendaraan = (state.jenisKendaraan === 1) ? "Motor" : "Mobil";
+            let namaMember = (state.statusMember === 1) ? "Member Gold" : (state.statusMember === 2) ? "Member Silver" : "Non-Member";
+            let metodeBayar = (state.pilihMetode === 1) ? "Tunai" : "QRIS";
+
+            let nominalBayar = parseInt(document.getElementById('input-tunai').value) || 0;
+            let kembalian = (state.pilihMetode === 1) ? Math.max(0, nominalBayar - hasil.totalBayar) : 0;
+
+            tampilkanStruk(
+                namaKendaraan, state.durasi, namaMember,
+                hasil.tarifDasar, hasil.diskon, hasil.biayaTambahan,
+                hasil.potonganTambahan, hasil.totalBayar,
+                metodeBayar, nominalBayar, kembalian
+            );
+
+            // Sembunyikan alert saat pengguna mengubah input
+            document.getElementById('alert-box').classList.add('hidden');
+            const badge = document.getElementById('struk-status-badge');
+            badge.className = "text-center py-2.5 px-4 rounded-xl bg-slate-100 text-slate-600 font-mono-receipt text-xs font-semibold mb-4";
+            badge.textContent = "PRATINJAU TAGIHAN";
+        }
+
+        function prosesTransaksi() {
+            const hasil = hitungSemua();
+            const alertBox = document.getElementById('alert-box');
+            const badge = document.getElementById('struk-status-badge');
+            let nominalBayar = parseInt(document.getElementById('input-tunai').value) || 0;
+
+            alertBox.classList.remove('hidden');
+
+            if (state.pilihMetode === 1 && nominalBayar < hasil.totalBayar) {
+                let kurang = hasil.totalBayar - nominalBayar;
+                alertBox.className = "p-4 rounded-xl text-sm font-medium bg-rose-50 text-rose-700 border border-rose-200";
+                alertBox.innerHTML = `<strong>[TRANSAKSI GAGAL]</strong> Uang pembayaran kurang <strong>${formatRupiah(kurang)}</strong>!`;
+
+                badge.className = "text-center py-2.5 px-4 rounded-xl bg-rose-100 text-rose-700 font-mono-receipt text-xs font-bold mb-4";
+                badge.textContent = "TRANSAKSI GAGAL (UANG KURANG)";
+                return;
+            }
+
+            let kembalian = (state.pilihMetode === 1) ? (nominalBayar - hasil.totalBayar) : 0;
+            alertBox.className = "p-4 rounded-xl text-sm font-medium bg-emerald-50 text-emerald-800 border border-emerald-200";
+            
+            if (state.pilihMetode === 1) {
+                alertBox.innerHTML = `<strong>[TRANSAKSI BERHASIL]</strong> Pembayaran tunai diterima. Kembalian: <strong>${formatRupiah(kembalian)}</strong>.`;
+            } else {
+                alertBox.innerHTML = `<strong>[TRANSAKSI BERHASIL]</strong> Pembayaran QRIS sebesar <strong>${formatRupiah(hasil.totalBayar)}</strong> telah lunas.`;
+            }
+
+            badge.className = "text-center py-2.5 px-4 rounded-xl bg-emerald-100 text-emerald-800 font-mono-receipt text-xs font-bold mb-4";
+            badge.textContent = "PEMBAYARAN LUNAS";
+        }
+
+        function resetForm() {
+            document.getElementById('input-durasi').value = 1;
+            document.getElementById('input-tunai').value = "";
+            pilihKendaraan(1);
+            pilihMember(3);
+            pilihMetode(1);
+        }
+
+        // Inisialisasi tanggal & struk saat pertama kali dibuka
+        window.onload = () => {
+            const opsiTanggal = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById('struk-waktu').textContent = new Date().toLocaleDateString('id-ID', opsiTanggal);
+            sinkronisasiUI();
+        };
+    </script>
+</body>
+</html>
