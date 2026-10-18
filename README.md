@@ -1,1 +1,50 @@
-# sistem-pembayaran-parkir-otomatis
+# 🅿️ Sistem Pembayaran Parkir Otomatis (C++)
+
+Aplikasi konsol (Command Line Interface) berbasis bahasa **C++** untuk mengotomatisasi perhitungan biaya parkir kendaraan (Motor & Mobil) di pusat perbelanjaan. Program ini dirancang untuk mengurangi kesalahan perhitungan oleh petugas parkir, serta mendukung berbagai metode pembayaran dan keanggotaan.
+
+---
+
+## ✨ Fitur Utama & Ketentuan Sistem
+
+1. **Tarif Berdasarkan Kendaraan & Durasi:**
+   * **Motor:** Rp 3.000 (Jam pertama) + Rp 2.000/jam untuk jam berikutnya.
+   * **Mobil:** Rp 5.000 (Jam pertama) + Rp 3.000/jam untuk jam berikutnya.
+2. **Diskon Keanggotaan (Membership):**
+   * **Member Gold:** Diskon 20%
+   * **Member Silver:** Diskon 10%
+   * **Non-Member:** Tanpa diskon (0%)
+3. **Ketentuan & Biaya Tambahan:**
+   * **Biaya Tambahan (>8 Jam):** Dikenakan tambahan tetap Rp 5.000 jika durasi parkir lebih dari 8 jam.
+   * **Potongan Ekstra:** Jika total biaya setelah diskon mencapai minimal Rp 30.000, pelanggan mendapat potongan tambahan sebesar Rp 2.000.
+   * **Validasi Negatif:** Total biaya akhir dijamin tidak bernilai negatif.
+4. **Metode Pembayaran & Validasi:**
+   * **Tunai (Cash):** Sistem otomatis menghitung uang kembalian. Jika uang pembayaran kurang dari total tagihan, transaksi otomatis dinyatakan gagal.
+   * **QRIS:** Pembayaran digital langsung dinyatakan lunas.
+5. **Format Angka Rupiah:** Menggunakan pemisah ribuan otomatis standar Indonesia (contoh: `Rp 38.000`) menggunakan pustaka `<locale>` bawaan C++.
+
+---
+
+## 🛠️ Implementasi 5 Fungsi Wajib
+
+Sesuai dengan spesifikasi studi kasus, program ini wajib menggunakan minimal 5 fungsi utama:
+
+| No. | Nama Fungsi | Tugas / Deskripsi |
+| :--- | :--- | :--- |
+| 1 | `hitungTarifParkir()` | Menghitung tarif dasar berdasarkan jenis kendaraan dan durasi. |
+| 2 | `hitungDiskon()` | Menghitung besaran diskon berdasarkan status keanggotaan. |
+| 3 | `hitungBiayaTambahan()` | Menghitung biaya ekstra jika durasi parkir melebihi 8 jam. |
+| 4 | `hitungTotalBayar()` | Mengakumulasi tarif, diskon, biaya tambahan, potongan ekstra, dan validasi akhir. |
+| 5 | `tampilkanStruk()` | Mencetak rincian struk transaksi ke layar konsol secara rapi. |
+
+---
+
+## 🚀 Cara Menjalankan Program
+
+### Prasyarat
+Pastikan komputer Anda sudah terpasang C++ Compiler (seperti **GCC/MinGW** di Windows, **Clang** di macOS, atau **g++** di Linux).
+
+### Langkah Kompilasi & Eksekusi (via Terminal / Git Bash):
+1. Clone repositori ini atau unduh file `main.cpp`:
+   ```bash
+   git clone [https://github.com/USERNAME-KAMU/sistem-parkir-cpp.git](https://github.com/USERNAME-KAMU/sistem-parkir-cpp.git)
+   cd sistem-parkir-cpp
