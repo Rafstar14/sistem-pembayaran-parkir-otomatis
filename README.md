@@ -26,7 +26,7 @@ Aplikasi konsol (Command Line Interface) berbasis bahasa **C++** untuk mengotoma
 
 ## 🛠️ Implementasi 5 Fungsi Wajib
 
-Sesuai dengan spesifikasi studi kasus, program ini wajib menggunakan minimal 5 fungsi utama:
+Sesuai dengan spesifikasi studi kasus, program ini menggunakan 5 fungsi utama:
 
 | No. | Nama Fungsi | Tugas / Deskripsi |
 | :--- | :--- | :--- |
@@ -38,13 +38,17 @@ Sesuai dengan spesifikasi studi kasus, program ini wajib menggunakan minimal 5 f
 
 ---
 
-## 🚀 Cara Menjalankan Program
+## 🚀 Cara Orang Lain Menggunakan Kode Ini
 
-### Prasyarat
-Pastikan komputer Anda sudah terpasang C++ Compiler (seperti **GCC/MinGW** di Windows, **Clang** di macOS, atau **g++** di Linux).
+Bagi pengguna atau dosen yang ingin menguji program ini, terdapat dua cara mudah:
 
-### Langkah Kompilasi & Eksekusi (via Terminal / Git Bash):
-1. Clone repositori ini atau unduh file `main.cpp`:
+### Cara A: Langsung Salin Kode (Tanpa Git)
+1. Buat file baru di komputer menggunakan aplikasi C++ IDE (seperti Dev-C++, Code::Blocks, atau VS Code) dan beri nama `main.cpp`.
+2. Buka file `main.cpp` di repositori GitHub ini, salin seluruh isi kodenya.
+3. Tempel (*paste*) ke dalam file `main.cpp` di komputer Anda, lalu **Compile & Run**.
+
+### Cara B: Menggunakan Terminal / Git Bash (Clone Repository)
+1. Buka terminal atau Git Bash di komputer Anda, lalu jalankan perintah berikut:
    ```bash
-   git clone [https://github.com/USERNAME-KAMU/sistem-parkir-cpp.git](https://github.com/USERNAME-KAMU/sistem-parkir-cpp.git)
-   cd sistem-parkir-cpp
+   git clone [https://github.com/Rafstar14/sistem-pembayaran-parkir-otomatis.git](https://github.com/Rafstar14/sistem-pembayaran-parkir-otomatis.git)
+   cd sistem-pembayaran-parkir-otomatis
